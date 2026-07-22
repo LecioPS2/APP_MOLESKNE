@@ -20,10 +20,11 @@ export default function Register() {
         body: JSON.stringify({ name, email, password })
       });
       
-      const data = await res.json();
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      const data = isJson ? await res.json() : null;
       
       if (!res.ok) {
-        throw new Error(data.message || 'Erro no cadastro');
+        throw new Error((data && data.message) || 'Erro no servidor (banco de dados offline?)');
       }
       
       // Save token
