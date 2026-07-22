@@ -11,7 +11,7 @@ app.use(cors());
 // Database connection
 // HARDCODED TEMPORARILY: We added your URI directly here (com o %23 no lugar do #)
 // para contornar o bug do painel da Hostinger.
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://admin_ubs:825425Bill12**%23@saudeubs.dhpdnra.mongodb.net/APP_MOLESKINE?retryWrites=true&w=majority&appName=APP_MOLESKNE';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://admin_ubs:825425Bill12%2A%2A%23@saudeubs.dhpdnra.mongodb.net/APP_MOLESKINE?retryWrites=true&w=majority&appName=APP_MOLESKNE';
 
 if (MONGODB_URI) {
   mongoose.connect(MONGODB_URI)
