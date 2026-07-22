@@ -31,11 +31,17 @@ app.use('/api/entries', entriesRoutes);
 const path = require('path');
 
 // Serve static files from the React frontend app
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Catch-all route to serve the React index.html for any non-API routes
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+  const filePath = path.join(__dirname, 'public', 'index.html');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Failed to send file:', filePath, err);
+      res.status(500).send('Frontend not found at ' + filePath);
+    }
+  });
 });
 
 const PORT = process.env.PORT || 5000;
