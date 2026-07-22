@@ -15,6 +15,11 @@ export default function Dashboard() {
 
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const fullName = user?.name || 'Usuário';
+  const firstName = fullName.split(' ')[0];
 
   // Fetch entries from DB
   useEffect(() => {
@@ -164,12 +169,12 @@ export default function Dashboard() {
           }}></div>
           
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 600, margin: 0, letterSpacing: '0.5px' }}>Fulano de Tal</h2>
-            <p style={{ fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.8rem' }}>Olá, Fulano</p>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 600, margin: 0, letterSpacing: '0.5px' }}>{fullName}</h2>
+            <p style={{ fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.8rem' }}>Olá, {firstName}</p>
             
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                Olá, Fulano <ArrowRight size={16} />
+                Olá, {firstName} <ArrowRight size={16} />
               </div>
               <div style={{ width: '80px', height: '22px', backgroundColor: 'white', borderRadius: '12px' }}></div>
             </div>

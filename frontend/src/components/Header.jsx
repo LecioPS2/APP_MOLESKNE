@@ -1,6 +1,10 @@
 import { Bell, User } from 'lucide-react';
 
 export default function Header() {
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Usuário';
+
   return (
     <header style={{ 
       display: 'flex', 
@@ -20,7 +24,7 @@ export default function Header() {
         }}>
           <User size={24} />
         </div>
-        <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>Olá, Fulano</span>
+        <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>Olá, {firstName}</span>
       </div>
       <div style={{
         width: '40px', height: '40px', backgroundColor: '#E2E8F0',

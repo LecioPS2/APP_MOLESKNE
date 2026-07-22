@@ -6,6 +6,12 @@ import { useState } from 'react';
 export default function Profile() {
   const [activeTab, setActiveTab] = useState('info'); // 'info' or 'password'
 
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const fullName = user?.name || 'Usuário';
+  const email = user?.email || 'email@exemplo.com';
+  const initial = fullName.charAt(0).toUpperCase();
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-color)', minHeight: '100vh', position: 'relative' }}>
       <Header />
@@ -28,7 +34,7 @@ export default function Profile() {
               fontWeight: 600,
               boxShadow: '0 4px 15px rgba(49, 54, 121, 0.2)'
             }}>
-              F
+              {initial}
             </div>
             <button style={{
               position: 'absolute',
@@ -48,8 +54,8 @@ export default function Profile() {
               <Camera size={18} />
             </button>
           </div>
-          <h2 style={{ marginTop: '1rem', fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: 700 }}>Fulano de Tal</h2>
-          <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>fulano@exemplo.com</p>
+          <h2 style={{ marginTop: '1rem', fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: 700 }}>{fullName}</h2>
+          <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>{email}</p>
         </div>
 
         {/* Tab Switcher */}
@@ -92,11 +98,11 @@ export default function Profile() {
             <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="input-group">
                 <label>Nome Completo</label>
-                <input type="text" defaultValue="Fulano de Tal" />
+                <input type="text" defaultValue={fullName} />
               </div>
               <div className="input-group">
                 <label>E-mail</label>
-                <input type="email" defaultValue="fulano@exemplo.com" />
+                <input type="email" defaultValue={email} />
               </div>
               <div className="input-group">
                 <label>Telefone</label>
@@ -134,7 +140,15 @@ export default function Profile() {
         </div>
 
         {/* Logout Button */}
-        <button className="btn btn-danger" style={{ marginTop: '2rem', backgroundColor: '#FEE2E2', color: 'var(--danger-red)', padding: '1rem' }}>
+        <button 
+          className="btn btn-danger" 
+          style={{ marginTop: '2rem', backgroundColor: '#FEE2E2', color: 'var(--danger-red)', padding: '1rem' }}
+          onClick={() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+          }}
+        >
           <LogOut size={20} /> Sair da Conta
         </button>
 
