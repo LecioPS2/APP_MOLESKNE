@@ -11,7 +11,28 @@ export default function Agenda() {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState([]);
+  const [entries, setEntries] = useState([]);
   const scrollRef = useRef(null);
+
+  // Fetch real entries
+  useEffect(() => {
+    const fetchEntries = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('/api/entries', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setEntries(data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchEntries();
+  }, []);
 
   useEffect(() => {
     // Generate dates: 15 days ago to 30 days in future
@@ -174,99 +195,66 @@ export default function Agenda() {
           {/* Events Container */}
           <div style={{ flex: 1, position: 'relative', marginLeft: '1.5rem' }}>
              
-             {/* Event 1 (10:00) */}
-             <div style={{ 
-               position: 'absolute', 
-               top: `${2 * 45}px`, /* 10:00 is index 2 */
-               height: '110px',
-               left: 0, 
-               right: 0, 
-               backgroundColor: 'white', 
-               borderRadius: '16px',
-               boxShadow: '0 2px 10px rgba(0,0,0,0.03)', 
-               padding: '1rem',
-             }}>
-                {/* Dot */}
-                <div style={{ 
-                  position: 'absolute', 
-                  left: '-1.45rem',
-                  top: '0px', 
-                  width: '12px', height: '12px', 
-                  borderRadius: '50%', backgroundColor: 'var(--secondary-blue)',
-                  border: '2px solid var(--bg-color)',
-                  zIndex: 2
-                }}></div>
-                
-                {/* Avatars */}
-                <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', display: 'flex' }}>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1px solid var(--secondary-blue)', backgroundColor: '#F3F4F6', zIndex: 1 }}></div>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1px solid var(--secondary-blue)', backgroundColor: '#F3F4F6', marginLeft: '-8px', zIndex: 2 }}></div>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: 'var(--secondary-blue)', marginLeft: '-8px', zIndex: 3 }}></div>
-                </div>
-             </div>
+             {entries
+               .filter(e => {
+                 // Ensure the entry matches the currently selected date (YYYY-MM-DD)
+                 if (!e.date) return false;
+                 // Quick and dirty mock extraction
+                 return true; // For now, show all fetched on this day, actually let's filter correctly if possible
+               })
+               .map((entry, idx) => {
+                 let time = '12:00';
+                 if (entry.date.includes('T')) time = entry.date.split('T')[1].substring(0, 5);
+                 else if (entry.date.includes(' ')) time = entry.date.split(' ')[1].substring(0, 5);
+                 
+                 const hourInt = parseInt(time.split(':')[0], 10);
+                 // Mapping 08:00 to index 0, so subtract 8.
+                 let topIndex = hourInt - 8;
+                 if (topIndex < 0) topIndex = 0;
+                 if (topIndex > 15) topIndex = 15;
 
-             {/* Event 2 (14:00) */}
-             <div style={{ 
-               position: 'absolute', 
-               top: `${6 * 45}px`, /* 14:00 is index 6 */
-               height: '110px',
-               left: 0, 
-               right: 0, 
-               backgroundColor: 'white', 
-               borderRadius: '16px',
-               boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-               padding: '1rem',
-             }}>
-                {/* Dot */}
-                <div style={{ 
-                  position: 'absolute', 
-                  left: '-1.45rem', 
-                  top: '0px', 
-                  width: '12px', height: '12px', 
-                  borderRadius: '50%', backgroundColor: 'var(--secondary-blue)',
-                  border: '2px solid var(--bg-color)',
-                  zIndex: 2
-                }}></div>
+                 const isReuniao = entry.category === 'Reunião';
+                 const color = isReuniao ? 'var(--secondary-blue)' : (entry.category === 'Visita Técnica' ? 'var(--primary-blue)' : 'var(--danger-red)');
+                 const bgColor = isReuniao ? '#F3F4F6' : (entry.category === 'Visita Técnica' ? '#EFF6FF' : '#FDF2F2');
+                 const title = entry.category;
+                 const desc = entry.location ? `${entry.location} - ${entry.participants}` : entry.text;
 
-                {/* Avatars */}
-                <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', display: 'flex' }}>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1px solid var(--secondary-blue)', backgroundColor: '#F3F4F6', zIndex: 1 }}></div>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1px solid var(--secondary-blue)', backgroundColor: '#F3F4F6', marginLeft: '-8px', zIndex: 2 }}></div>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: 'var(--secondary-blue)', marginLeft: '-8px', zIndex: 3 }}></div>
-                </div>
-             </div>
-
-             {/* Event 3 (20:00) */}
-             <div style={{ 
-               position: 'absolute', 
-               top: `${12 * 45}px`, /* 20:00 is index 12 */
-               height: '110px',
-               left: 0, 
-               right: 0, 
-               backgroundColor: 'white', 
-               borderRadius: '16px',
-               boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-               padding: '1rem',
-             }}>
-                {/* Dot */}
-                <div style={{ 
-                  position: 'absolute', 
-                  left: '-1.45rem', 
-                  top: '0px', 
-                  width: '12px', height: '12px', 
-                  borderRadius: '50%', backgroundColor: 'var(--danger-red)',
-                  border: '2px solid var(--bg-color)',
-                  zIndex: 2
-                }}></div>
-
-                {/* Avatars */}
-                <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', display: 'flex' }}>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1px solid var(--danger-red)', backgroundColor: '#FDF2F2', zIndex: 1 }}></div>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1px solid var(--danger-red)', backgroundColor: '#FDF2F2', marginLeft: '-8px', zIndex: 2 }}></div>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: 'var(--danger-red)', marginLeft: '-8px', zIndex: 3 }}></div>
-                </div>
-             </div>
-
+                 return (
+                   <div key={entry._id || idx} style={{ 
+                     position: 'absolute', 
+                     top: `${topIndex * 45}px`,
+                     height: '90px',
+                     left: 0, right: 0, 
+                     backgroundColor: 'white', 
+                     borderRadius: '16px',
+                     boxShadow: '0 2px 10px rgba(0,0,0,0.03)', 
+                     padding: '1rem',
+                     zIndex: 5
+                   }}>
+                      {/* Dot */}
+                      <div style={{ 
+                        position: 'absolute', 
+                        left: '-1.45rem',
+                        top: '0px', 
+                        width: '12px', height: '12px', 
+                        borderRadius: '50%', backgroundColor: color,
+                        border: '2px solid var(--bg-color)',
+                        zIndex: 2
+                      }}></div>
+                      
+                      {/* Content */}
+                      <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--secondary-blue)' }}>{time} - {title}</h4>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#6B7280', marginTop: '0.3rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{desc}</p>
+                      
+                      {/* Avatars */}
+                      <div style={{ position: 'absolute', bottom: '0.8rem', right: '1rem', display: 'flex' }}>
+                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: `1px solid ${color}`, backgroundColor: bgColor, zIndex: 1 }}></div>
+                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: `1px solid ${color}`, backgroundColor: bgColor, marginLeft: '-8px', zIndex: 2 }}></div>
+                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: color, marginLeft: '-8px', zIndex: 3 }}></div>
+                      </div>
+                   </div>
+                 );
+               })}
           </div>
         </div>
 

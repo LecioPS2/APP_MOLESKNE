@@ -6,9 +6,10 @@ export default function VoiceAssistant({ onClose }) {
   const [aiText, setAiText] = useState('Qual a categoria da sua anotação? (Ex: Reunião, Visita Técnica...)');
   const [isListening, setIsListening] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Mock gathered data
-  const [data, setData] = useState({ category: '', date: '', location: '', participants: '' });
+  const [data, setData] = useState({ category: '', date: '', location: '', participants: '', text: 'Anotado por voz' });
 
   // Simulate voice interaction flow
   useEffect(() => {
@@ -52,9 +53,29 @@ export default function VoiceAssistant({ onClose }) {
     }, 2000);
   };
 
-  const handleSave = () => {
-    alert('Anotação via Voz salva com sucesso!');
-    onClose();
+  const handleSave = async () => {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    
+    try {
+      const res = await fetch('/api/entries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!res.ok) throw new Error('Falha ao salvar anotação via voz');
+      
+      alert('Anotação via Voz salva com sucesso!');
+      onClose();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,14 +146,15 @@ export default function VoiceAssistant({ onClose }) {
         ) : (
           <button 
             onClick={handleSave}
+            disabled={loading}
             style={{
               width: '100%', maxWidth: '300px', padding: '1.2rem', borderRadius: '16px',
-              backgroundColor: '#10B981', color: 'white', border: 'none',
+              backgroundColor: loading ? '#4B5563' : '#10B981', color: 'white', border: 'none',
               fontWeight: 700, fontSize: '1.1rem', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem',
-              boxShadow: '0 10px 25px rgba(16, 185, 129, 0.3)'
+              boxShadow: loading ? 'none' : '0 10px 25px rgba(16, 185, 129, 0.3)'
             }}>
-            <Check size={24} /> Confirmar e Salvar
+            <Check size={24} /> {loading ? 'Salvando...' : 'Confirmar e Salvar'}
           </button>
         )}
 

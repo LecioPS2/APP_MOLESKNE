@@ -7,11 +7,33 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
+  const [error, setError] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate registration for now
-    console.log('Register attempt with:', { name, email });
-    navigate('/login');
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Erro no cadastro');
+      }
+      
+      // Save token
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -22,6 +44,7 @@ export default function Register() {
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
+        {error && <div style={{ color: 'red', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
         <div className="input-group">
           <label htmlFor="name">Nome Completo</label>
           <input

@@ -3,12 +3,42 @@ import { useState } from 'react';
 
 export default function ManualCreate({ onClose }) {
   const [category, setCategory] = useState('Anotação');
+  const [date, setDate] = useState('');
+  const [location, setLocation] = useState('');
+  const [participants, setParticipants] = useState('');
+  const [text, setText] = useState('');
+  const [loading, setLoading] = useState(false);
+  
   const categories = ['Rascunho', 'Visita Técnica', 'Anotação', 'Reunião'];
 
-  const handleSave = () => {
-    // In the future, send to backend
-    alert('Anotação salva com sucesso! (Integração com backend em breve)');
-    onClose();
+  const handleSave = async () => {
+    if (!date) {
+      alert('Por favor, selecione uma data.');
+      return;
+    }
+    
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    
+    try {
+      const res = await fetch('/api/entries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ category, date, text, location, participants })
+      });
+      
+      if (!res.ok) throw new Error('Falha ao salvar anotação');
+      
+      alert('Anotação salva com sucesso!');
+      onClose();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,9 +58,9 @@ export default function ManualCreate({ onClose }) {
           <X size={28} />
         </button>
         <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--secondary-blue)' }}>Nova Anotação</div>
-        <button onClick={handleSave} style={{ background: 'transparent', border: 'none', color: 'var(--primary-blue)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '1rem', marginRight: '-0.5rem' }}>
+        <button onClick={handleSave} disabled={loading} style={{ background: 'transparent', border: 'none', color: loading ? '#9CA3AF' : 'var(--primary-blue)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '1rem', marginRight: '-0.5rem' }}>
           <Save size={20} strokeWidth={2.5} />
-          Salvar
+          {loading ? 'Salvando...' : 'Salvar'}
         </button>
       </div>
 
@@ -69,6 +99,8 @@ export default function ManualCreate({ onClose }) {
             <CalendarIcon size={20} color="#9CA3AF" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
             <input 
               type="datetime-local" 
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               style={{
                 width: '100%',
                 padding: '1rem 1rem 1rem 3rem',
@@ -93,6 +125,8 @@ export default function ManualCreate({ onClose }) {
               <input 
                 type="text" 
                 placeholder="Ex: Sala 2 ou Link do Meet"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
                 style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid #E5E7EB', fontSize: '1rem', outline: 'none', backgroundColor: 'white', color: 'var(--text-primary)' }}
               />
             </div>
@@ -101,6 +135,8 @@ export default function ManualCreate({ onClose }) {
               <input 
                 type="text" 
                 placeholder="Ex: João, Cliente X"
+                value={participants}
+                onChange={(e) => setParticipants(e.target.value)}
                 style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid #E5E7EB', fontSize: '1rem', outline: 'none', backgroundColor: 'white', color: 'var(--text-primary)' }}
               />
             </div>
@@ -112,6 +148,8 @@ export default function ManualCreate({ onClose }) {
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: 'var(--secondary-blue)', marginBottom: '0.8rem' }}>Bloco de Notas</label>
           <textarea 
             placeholder="Comece a digitar os detalhes aqui..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
             style={{
               flex: 1,
               width: '100%',

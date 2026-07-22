@@ -1,38 +1,56 @@
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Notes() {
   const [activeDay, setActiveDay] = useState('SEG');
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const days = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
 
-  // Mock data for each day
-  const notesData = {
-    'SEG': [
-      { id: 1, text: 'Finalizar documentação do projeto do aplicativo', color: 'var(--secondary-blue)' },
-      { id: 2, text: 'Revisão da interface gráfica com a equipe', color: 'var(--secondary-blue)' },
-      { id: 3, text: 'Enviar relatório de atividades semanal', color: 'var(--danger-red)' }
-    ],
-    'TER': [
-      { id: 4, text: 'Reunião de alinhamento com o cliente', color: 'var(--primary-blue)' }
-    ],
-    'QUA': [
-      { id: 5, text: 'Consulta médica às 14h', color: 'var(--secondary-blue)' },
-      { id: 6, text: 'Comprar materiais de escritório pendentes', color: 'var(--danger-red)' }
-    ],
-    'QUI': [],
-    'SEX': [
-      { id: 7, text: 'Apresentação de resultados da sprint', color: 'var(--secondary-blue)' },
-      { id: 8, text: 'Happy hour da empresa', color: '#10B981' }
-    ],
-    'SÁB': [
-      { id: 9, text: 'Fazer compras no supermercado', color: 'var(--secondary-blue)' }
-    ],
-    'DOM': []
+  // Fetch real entries
+  useEffect(() => {
+    const fetchEntries = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('/api/entries', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setEntries(data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEntries();
+  }, []);
+
+  const getDayName = (dateString) => {
+    if (!dateString) return 'SEG';
+    let d;
+    if (dateString.includes('T')) d = new Date(dateString);
+    else d = new Date(dateString.replace(' ', 'T'));
+    
+    if (isNaN(d)) return 'SEG';
+    const names = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+    return names[d.getDay()];
   };
 
-  const activeNotes = notesData[activeDay] || [];
+  const activeNotes = entries.filter(e => getDayName(e.date) === activeDay).map(e => {
+    const isReuniao = e.category === 'Reunião';
+    const color = isReuniao ? 'var(--secondary-blue)' : (e.category === 'Visita Técnica' ? 'var(--primary-blue)' : 'var(--danger-red)');
+    return {
+      id: e._id,
+      text: e.text || e.category,
+      color
+    };
+  });
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-color)', minHeight: '100vh', position: 'relative' }}>
@@ -137,7 +155,9 @@ export default function Notes() {
             )}
 
             {/* Render Notes */}
-            {activeNotes.length === 0 ? (
+            {loading ? (
+              <p style={{ textAlign: 'center', color: '#6B7280', marginTop: '3rem' }}>Carregando tarefas...</p>
+            ) : activeNotes.length === 0 ? (
               <p style={{ textAlign: 'center', color: '#6B7280', marginTop: '3rem' }}>Nenhuma tarefa para este dia.</p>
             ) : (
               activeNotes.map((note) => (

@@ -22,6 +22,9 @@ if (MONGODB_URI) {
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+const entriesRoutes = require('./routes/entries');
+app.use('/api/entries', entriesRoutes);
+
 const path = require('path');
 
 // Serve static files from the React frontend app

@@ -2,6 +2,7 @@ import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import { Search, SlidersHorizontal, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -12,33 +13,49 @@ export default function Dashboard() {
   const dayMonth = today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
   const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
 
-  // Mock Events
-  const events = [
-    {
-      id: 1,
-      time: '11:00',
-      title: 'Reunião de Alinhamento',
-      description: 'Discussão sobre o novo layout.',
-      color: 'var(--secondary-blue)',
-      bgColor: '#F3F4F6'
-    },
-    {
-      id: 2,
-      time: '14:30',
-      title: 'Visita Técnica',
-      description: 'Cliente X - Instalação do sistema.',
-      color: 'var(--primary-blue)',
-      bgColor: '#EFF6FF'
-    },
-    {
-      id: 3,
-      time: '16:00',
-      title: 'Apresentação Final',
-      description: 'Mostra de resultados do trimestre.',
-      color: 'var(--danger-red)',
-      bgColor: '#FDF2F2'
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch entries from DB
+  useEffect(() => {
+    const fetchEntries = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const res = await fetch('/api/entries', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Filter to only today's entries for the dashboard (mock logic)
+          // In real app we might parse the ISO date or datetime-local
+          setEntries(data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEntries();
+  }, []);
+
+  const getEventColor = (category) => {
+    switch (category) {
+      case 'Reunião': return { color: 'var(--secondary-blue)', bgColor: '#F3F4F6' };
+      case 'Visita Técnica': return { color: 'var(--primary-blue)', bgColor: '#EFF6FF' };
+      default: return { color: 'var(--danger-red)', bgColor: '#FDF2F2' };
     }
-  ];
+  };
+
+  const displayEvents = entries.slice(0, 3).map(e => ({
+    id: e._id,
+    time: e.date ? e.date.split('T')[1] || e.date.split(' ')[1] || '12:00' : '12:00', // simple mock extraction
+    title: e.category,
+    description: e.location ? `${e.location} - ${e.participants}` : e.text || 'Sem descrição',
+    ...getEventColor(e.category)
+  }));
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-color)', minHeight: '100vh', position: 'relative' }}>
@@ -164,7 +181,9 @@ export default function Dashboard() {
           {capitalizedWeekday} <span style={{ fontWeight: 400 }}>{dayMonth}</span>
         </h3>
 
-        {events.length === 0 ? (
+        {loading ? (
+          <p style={{ textAlign: 'center', color: '#6B7280', marginTop: '2rem' }}>Carregando compromissos...</p>
+        ) : displayEvents.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#6B7280', marginTop: '2rem' }}>Você não tem compromissos hoje.</p>
         ) : (
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '2rem' }}>
@@ -178,12 +197,12 @@ export default function Dashboard() {
               backgroundColor: '#000' 
             }}></div>
             
-            {events.map((event) => (
+            {displayEvents.map((event) => (
               <div key={event.id} style={{ display: 'flex', position: 'relative', alignItems: 'stretch' }}>
                 
                 {/* Time Label */}
                 <div style={{ width: '3.5rem', flexShrink: 0, fontSize: '0.75rem', color: '#111', fontWeight: 600, paddingTop: '1rem' }}>
-                  {event.time}
+                  {event.time.substring(0, 5)}
                 </div>
                 
                 {/* Event Card */}
