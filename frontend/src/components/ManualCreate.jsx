@@ -1,8 +1,8 @@
 import { X, Save, Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
 
-export default function ManualCreate({ onClose }) {
-  const [category, setCategory] = useState('Anotação');
+export default function ManualCreate({ onClose, initialCategory = 'Anotação' }) {
+  const [category, setCategory] = useState(initialCategory);
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
   const [participants, setParticipants] = useState('');

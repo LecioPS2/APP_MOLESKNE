@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Camera as CameraIcon } from 'lucide-react';
 
-export default function CameraScanner({ onClose }) {
+export default function CameraScanner({ onClose, onContinue }) {
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [status, setStatus] = useState('scanning'); // scanning, analyzing, result
@@ -137,7 +137,7 @@ export default function CameraScanner({ onClose }) {
            </p>
 
            <button 
-             onClick={onClose} 
+             onClick={() => onContinue(aiResult)} 
              style={{
                width: '100%', padding: '1.2rem', borderRadius: '12px',
                backgroundColor: 'var(--primary-blue)', color: 'white', border: 'none',

@@ -9,6 +9,13 @@ export default function CreateAction() {
   const [isScanning, setIsScanning] = useState(false);
   const [isManualCreating, setIsManualCreating] = useState(false);
   const [isVoiceAssistant, setIsVoiceAssistant] = useState(false);
+  const [scannedCategory, setScannedCategory] = useState('Anotação');
+
+  const handleScannerContinue = (category) => {
+    setIsScanning(false);
+    setScannedCategory(category);
+    setIsManualCreating(true);
+  };
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-color)', minHeight: '100vh', position: 'relative' }}>
@@ -84,9 +91,9 @@ export default function CreateAction() {
       <BottomNav activeTab="create" />
 
       {/* Render overlays */}
-      {isScanning && <CameraScanner onClose={() => setIsScanning(false)} />}
+      {isScanning && <CameraScanner onClose={() => setIsScanning(false)} onContinue={handleScannerContinue} />}
       {isVoiceAssistant && <VoiceAssistant onClose={() => setIsVoiceAssistant(false)} />}
-      {isManualCreating && <ManualCreate onClose={() => setIsManualCreating(false)} />}
+      {isManualCreating && <ManualCreate onClose={() => setIsManualCreating(false)} initialCategory={scannedCategory} />}
     </div>
   );
 }
