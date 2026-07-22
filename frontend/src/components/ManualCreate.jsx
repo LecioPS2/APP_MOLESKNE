@@ -1,12 +1,12 @@
 import { X, Save, Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
 
-export default function ManualCreate({ onClose, initialCategory = 'Anotação' }) {
-  const [category, setCategory] = useState(initialCategory);
-  const [date, setDate] = useState('');
-  const [location, setLocation] = useState('');
-  const [participants, setParticipants] = useState('');
-  const [text, setText] = useState('');
+export default function ManualCreate({ onClose, initialData = null }) {
+  const [category, setCategory] = useState(initialData?.category || 'Anotação');
+  const [date, setDate] = useState(initialData?.date || '');
+  const [location, setLocation] = useState(initialData?.location || '');
+  const [participants, setParticipants] = useState(initialData?.participants || '');
+  const [text, setText] = useState(initialData?.text || '');
   const [loading, setLoading] = useState(false);
   
   const categories = ['Rascunho', 'Visita Técnica', 'Anotação', 'Reunião'];

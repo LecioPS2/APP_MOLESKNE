@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Camera as CameraIcon } from 'lucide-react';
+import Tesseract from 'tesseract.js';
 
 export default function CameraScanner({ onClose, onContinue }) {
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [status, setStatus] = useState('scanning'); // scanning, analyzing, result
   const [aiResult, setAiResult] = useState('');
+  const [extractedData, setExtractedData] = useState({ category: 'Anotação', text: '', date: '', location: '', participants: '' });
 
   useEffect(() => {
     async function startCamera() {
@@ -31,13 +33,58 @@ export default function CameraScanner({ onClose, onContinue }) {
     };
   }, []);
 
-  const handleCapture = () => {
+  const handleCapture = async () => {
     setStatus('analyzing');
-    // Simulate AI processing time
-    setTimeout(() => {
+    
+    // 1. Draw video to canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    const imageDataUrl = canvas.toDataURL('image/jpeg');
+
+    try {
+      // 2. Run OCR using Tesseract
+      const { data: { text } } = await Tesseract.recognize(imageDataUrl, 'por', {
+        logger: m => console.log(m)
+      });
+      
+      console.log('OCR Result:', text);
+
+      // 3. Simple Heuristic AI Parser
+      let category = 'Anotação';
+      const lowerText = text.toLowerCase();
+      
+      if (lowerText.includes('reunião') || lowerText.includes('reuniao')) category = 'Reunião';
+      else if (lowerText.includes('visita') || lowerText.includes('técnica')) category = 'Visita Técnica';
+      else if (lowerText.includes('rascunho')) category = 'Rascunho';
+
+      // Extract date (DD/MM/YYYY or DD/MM)
+      const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+      let parsedDate = '';
+      if (dateMatch) {
+        const d = dateMatch[1].padStart(2, '0');
+        const m = dateMatch[2].padStart(2, '0');
+        const y = dateMatch[3] ? (dateMatch[3].length === 2 ? '20' + dateMatch[3] : dateMatch[3]) : new Date().getFullYear();
+        parsedDate = `${y}-${m}-${d}T12:00`; // mock time
+      }
+
+      setExtractedData({
+        category,
+        text,
+        date: parsedDate,
+        location: '',
+        participants: ''
+      });
+      
+      setAiResult(category);
       setStatus('result');
-      setAiResult('Visita Técnica'); // Fake AI result for now
-    }, 3000);
+    } catch (err) {
+      console.error(err);
+      setAiResult('Erro na leitura');
+      setStatus('result');
+    }
   };
 
   return (
@@ -137,7 +184,7 @@ export default function CameraScanner({ onClose, onContinue }) {
            </p>
 
            <button 
-             onClick={() => onContinue(aiResult)} 
+             onClick={() => onContinue(extractedData)} 
              style={{
                width: '100%', padding: '1.2rem', borderRadius: '12px',
                backgroundColor: 'var(--primary-blue)', color: 'white', border: 'none',

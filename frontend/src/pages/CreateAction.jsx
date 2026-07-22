@@ -9,11 +9,11 @@ export default function CreateAction() {
   const [isScanning, setIsScanning] = useState(false);
   const [isManualCreating, setIsManualCreating] = useState(false);
   const [isVoiceAssistant, setIsVoiceAssistant] = useState(false);
-  const [scannedCategory, setScannedCategory] = useState('Anotação');
+  const [scannedData, setScannedData] = useState(null);
 
-  const handleScannerContinue = (category) => {
+  const handleScannerContinue = (data) => {
     setIsScanning(false);
-    setScannedCategory(category);
+    setScannedData(data);
     setIsManualCreating(true);
   };
 
@@ -93,7 +93,7 @@ export default function CreateAction() {
       {/* Render overlays */}
       {isScanning && <CameraScanner onClose={() => setIsScanning(false)} onContinue={handleScannerContinue} />}
       {isVoiceAssistant && <VoiceAssistant onClose={() => setIsVoiceAssistant(false)} />}
-      {isManualCreating && <ManualCreate onClose={() => setIsManualCreating(false)} initialCategory={scannedCategory} />}
+      {isManualCreating && <ManualCreate onClose={() => setIsManualCreating(false)} initialData={scannedData} />}
     </div>
   );
 }
