@@ -3,6 +3,7 @@ import BottomNav from '../components/BottomNav';
 import CameraScanner from '../components/CameraScanner';
 import ManualCreate from '../components/ManualCreate';
 import VoiceAssistant from '../components/VoiceAssistant';
+import { Camera, Mic, Edit3 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function CreateAction() {
@@ -34,7 +35,7 @@ export default function CreateAction() {
             color: 'white',
             padding: '2rem 1.5rem', 
             borderRadius: '16px',
-            border: '2px solid #111',
+            border: 'none',
             display: 'flex',
             alignItems: 'center',
             fontSize: '1.15rem',
@@ -42,7 +43,7 @@ export default function CreateAction() {
             cursor: 'pointer',
             boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
           }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid white', marginRight: '1.5rem' }}></div>
+          <Camera size={28} color="white" style={{ marginRight: '1.2rem' }} />
           Captura de Imagem
         </button>
 
@@ -54,7 +55,7 @@ export default function CreateAction() {
             color: 'white',
             padding: '2rem 1.5rem', 
             borderRadius: '16px',
-            border: '2px solid #111',
+            border: 'none',
             display: 'flex',
             alignItems: 'center',
             fontSize: '1.15rem',
@@ -62,7 +63,7 @@ export default function CreateAction() {
             cursor: 'pointer',
             boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
           }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid white', marginRight: '1.5rem' }}></div>
+          <Mic size={28} color="white" style={{ marginRight: '1.2rem' }} />
           Criar por Voz com IA
         </button>
 
@@ -74,7 +75,7 @@ export default function CreateAction() {
             color: 'white',
             padding: '2rem 1.5rem', 
             borderRadius: '16px',
-            border: '2px solid #111',
+            border: 'none',
             display: 'flex',
             alignItems: 'center',
             fontSize: '1.15rem',
@@ -82,7 +83,7 @@ export default function CreateAction() {
             cursor: 'pointer',
             boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
           }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid white', marginRight: '1.5rem' }}></div>
+          <Edit3 size={28} color="white" style={{ marginRight: '1.2rem' }} />
           Criar Manualmente
         </button>
 
