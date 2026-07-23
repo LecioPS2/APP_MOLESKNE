@@ -66,41 +66,48 @@ export default function VoiceAssistant({ onClose }) {
     }
   };
 
-  const processText = (transcript) => {
+  const processText = async (transcript) => {
     if (!transcript) {
       setAiText('Não ouvi nada. Tente novamente.');
       return;
     }
     setIsProcessing(true);
-    setAiText('Analisando sua fala...');
+    setAiText('Analisando sua fala usando IA...');
 
-    // Smart Parser
-    setTimeout(() => {
-      let category = 'Anotação';
-      const lowerText = transcript.toLowerCase();
-      
-      if (lowerText.includes('reunião') || lowerText.includes('reuniao')) category = 'Reunião';
-      else if (lowerText.includes('visita') || lowerText.includes('técnica')) category = 'Visita Técnica';
-      else if (lowerText.includes('rascunho')) category = 'Rascunho';
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/ai/parse-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text: transcript })
+      });
 
-      // Try basic date extraction (e.g. 25/10 or 25 de outubro)
-      const dateMatch = transcript.match(/(\d{1,2})[\/\-](\d{1,2})/);
+      if (!res.ok) throw new Error('Falha ao processar texto com IA');
       
-      const now = new Date();
-      const pad = (n) => n.toString().padStart(2, '0');
-      let parsedDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const parsedData = await res.json();
       
-      if (dateMatch) {
-        const d = dateMatch[1].padStart(2, '0');
-        const m = dateMatch[2].padStart(2, '0');
-        parsedDate = `${now.getFullYear()}-${m}-${d}T12:00`;
-      }
-
-      setData({ category, text: transcript, date: parsedDate, location: '', participants: '' });
+      setData({ 
+        category: parsedData.category || 'Anotação', 
+        text: parsedData.text || transcript, 
+        date: parsedData.date || '', 
+        location: parsedData.location || '', 
+        participants: parsedData.participants || '' 
+      });
+      
       setIsProcessing(false);
       setIsDone(true);
       setAiText('Tudo pronto! Posso salvar sua anotação?');
-    }, 800);
+    } catch (err) {
+      console.error(err);
+      // Fallback if AI fails
+      setData({ category: 'Anotação', text: transcript, date: '', location: '', participants: '' });
+      setIsProcessing(false);
+      setIsDone(true);
+      setAiText('Pronto! Verifique os dados abaixo.');
+    }
   };
 
   const handleSave = async () => {

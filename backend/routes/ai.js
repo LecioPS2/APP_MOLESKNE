@@ -71,4 +71,59 @@ Exemplo de formato:
   }
 });
 
+router.post('/parse-text', async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ error: 'No text provided' });
+    }
+
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+    const currentYear = new Date().getFullYear();
+    const prompt = `
+Você é um assistente de produtividade especializado em analisar transcrições de voz.
+Analise o texto fornecido e extraia as informações estruturadas no formato JSON abaixo.
+
+Regras de Classificação de Categoria:
+- Se mencionar reuniões, discussões com clientes ou planejamento, classifique como "Reunião"
+- Se mencionar inspeções, visitas a obras, análise de campo, classifique como "Visita Técnica"
+- Caso contrário, classifique como "Anotação" (ou "Rascunho" se parecer muito informal)
+
+Extraia os seguintes campos com precisão. Se não encontrar um campo, retorne string vazia "".
+A data e horário devem estar no formato YYYY-MM-DDTHH:mm. Se não houver horário, use T12:00. Se o ano não for mencionado, assuma o ano atual (${currentYear}).
+Tente entender datas relativas ou faladas de forma natural (ex: "reunião no dia 25 às 14h00").
+
+Responda APENAS com um objeto JSON válido, sem markdown, sem crases.
+Exemplo de formato:
+{
+  "category": "Reunião",
+  "text": "Texto original corrigido e formatado.",
+  "date": "2026-07-25T14:00",
+  "location": "Sala de Reuniões principal",
+  "participants": "João, Maria, Cliente Y"
+}
+
+Texto para analisar:
+"${text}"
+`;
+
+    const result = await model.generateContent([prompt]);
+    const response = await result.response;
+    let textResult = response.text();
+    
+    // Clean up potential markdown formatting from Gemini
+    textResult = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    const parsedJson = JSON.parse(textResult);
+
+    res.json(parsedJson);
+
+  } catch (error) {
+    console.error('Error parsing text with Gemini:', error);
+    res.status(500).json({ error: 'Failed to parse text' });
+  }
+});
+
 module.exports = router;
