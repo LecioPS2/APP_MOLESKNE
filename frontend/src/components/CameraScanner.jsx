@@ -13,6 +13,8 @@ export default function CameraScanner({ onClose, onContinue }) {
   const animationRef = useRef(null);
   const documentCornersRef = useRef(null);
 
+  const streamRef = useRef(null);
+
   // Load OpenCV.js dynamically
   useEffect(() => {
     if (window.cv) {
@@ -59,6 +61,7 @@ export default function CameraScanner({ onClose, onContinue }) {
             height: { ideal: 1080 }
           } 
         });
+        streamRef.current = mediaStream;
         setStream(mediaStream);
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
@@ -75,8 +78,9 @@ export default function CameraScanner({ onClose, onContinue }) {
     startCamera();
 
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
