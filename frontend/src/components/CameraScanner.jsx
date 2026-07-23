@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Camera as CameraIcon } from 'lucide-react';
-import Tesseract from 'tesseract.js';
 
 export default function CameraScanner({ onClose, onContinue }) {
   const videoRef = useRef(null);
@@ -251,40 +250,29 @@ export default function CameraScanner({ onClose, onContinue }) {
     }
 
     try {
-      // Run OCR using Tesseract
-      const { data: { text } } = await Tesseract.recognize(imageDataUrl, 'por', {
-        logger: m => console.log(m)
+      // Enviar para o nosso backend que processa no Gemini
+      const response = await fetch('/api/ai/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageDataUrl })
       });
       
-      console.log('OCR Result:', text);
-
-      // Robust Heuristic AI Parser
-      let category = 'Anotação';
-      const lowerText = text.toLowerCase();
-      
-      if (lowerText.match(/r[eoé]uni[aãäâo]o/i) || lowerText.match(/reuni/i)) category = 'Reunião';
-      else if (lowerText.match(/visita/i) || lowerText.match(/t[eéè]cnica/i)) category = 'Visita Técnica';
-      else if (lowerText.match(/rascunho/i)) category = 'Rascunho';
-
-      // Extract date (DD/MM/YYYY or DD/MM or DD.MM)
-      const dateMatch = text.match(/(\d{1,2})[\/\-\.](\d{1,2})(?:[\/\-\.](\d{2,4}))?/);
-      let parsedDate = '';
-      if (dateMatch) {
-        const d = dateMatch[1].padStart(2, '0');
-        const m = dateMatch[2].padStart(2, '0');
-        const y = dateMatch[3] ? (dateMatch[3].length === 2 ? '20' + dateMatch[3] : dateMatch[3]) : new Date().getFullYear();
-        parsedDate = `${y}-${m}-${d}T12:00`;
+      if (!response.ok) {
+        throw new Error('Falha na API da IA');
       }
+      
+      const parsedData = await response.json();
+      console.log('Gemini Result:', parsedData);
 
       setExtractedData({
-        category,
-        text,
-        date: parsedDate,
-        location: '',
-        participants: ''
+        category: parsedData.category || 'Anotação',
+        text: parsedData.text || '',
+        date: parsedData.date || '',
+        location: parsedData.location || '',
+        participants: parsedData.participants || ''
       });
       
-      setAiResult(category);
+      setAiResult(parsedData.category || 'Anotação');
       setStatus('result');
     } catch (err) {
       console.error(err);
