@@ -18,8 +18,8 @@ router.post('/scan', async (req, res) => {
     const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
 
     // Prepare the model
-    // Using gemini-2.5-flash as it is the current fast model for multimodal OCR
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // Using gemini-flash-latest alias to ensure compatibility with new API keys
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const prompt = `
 Você é um assistente de produtividade especializado em analisar anotações manuscritas ou impressas.
