@@ -3,6 +3,7 @@ import BottomNav from '../components/BottomNav';
 import { Search, SlidersHorizontal, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { MoreVertical } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -54,7 +55,12 @@ export default function Dashboard() {
     }
   };
 
-  const displayEvents = entries.slice(0, 3).map(e => ({
+  const pad = (n) => n.toString().padStart(2, '0');
+  const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+  const todaysEntries = entries.filter(e => e.date && e.date.startsWith(todayStr));
+
+  const displayEvents = todaysEntries.slice(0, 3).map(e => ({
     id: e._id,
     time: e.date ? e.date.split('T')[1] || e.date.split(' ')[1] || '12:00' : '12:00', // simple mock extraction
     title: e.category,
@@ -152,31 +158,37 @@ export default function Dashboard() {
         {/* Dark Blue Banner */}
         <div style={{ 
           backgroundColor: 'var(--secondary-blue)', 
-          borderRadius: '12px', 
-          padding: '1.2rem', 
+          borderRadius: '16px', 
+          padding: '1.5rem', 
           display: 'flex', 
+          flexDirection: 'column',
           gap: '1rem',
           color: 'white',
-          marginBottom: '2rem'
+          marginBottom: '2rem',
+          boxShadow: '0 10px 25px rgba(49, 54, 121, 0.15)'
         }}>
-          {/* Avatar Placeholder */}
-          <div style={{ 
-            width: '75px', 
-            height: '80px', 
-            backgroundColor: 'white', 
-            borderRadius: '8px',
-            flexShrink: 0
-          }}></div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 600, margin: 0, letterSpacing: '0.5px' }}>{fullName}</h2>
-            <p style={{ fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.8rem' }}>Olá, {firstName}</p>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ 
+              width: '55px', 
+              height: '55px', 
+              backgroundColor: 'white', 
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--secondary-blue)',
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              flexShrink: 0
+            }}>
+              {firstName.charAt(0).toUpperCase()}
+            </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                Olá, {firstName} <ArrowRight size={16} />
-              </div>
-              <div style={{ width: '80px', height: '22px', backgroundColor: 'white', borderRadius: '12px' }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, letterSpacing: '0.5px' }}>Olá, {firstName}!</h2>
+              <p style={{ fontSize: '0.85rem', opacity: 0.9, margin: 0, marginTop: '4px' }}>
+                Você tem {todaysEntries.length} {todaysEntries.length === 1 ? 'compromisso' : 'compromissos'} hoje.
+              </p>
             </div>
           </div>
         </div>
@@ -198,8 +210,8 @@ export default function Dashboard() {
               left: '3.75rem', 
               top: '1rem', 
               bottom: '2rem', 
-              width: '1.5px', 
-              backgroundColor: '#000' 
+              width: '0px', 
+              borderLeft: '2px dashed #E5E7EB' 
             }}></div>
             
             {displayEvents.map((event) => (
@@ -240,12 +252,23 @@ export default function Dashboard() {
                   <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--secondary-blue)' }}>{event.title}</h4>
                   <p style={{ margin: 0, fontSize: '0.85rem', color: '#6B7280', marginTop: '0.3rem' }}>{event.description}</p>
                   
-                  {/* Avatars Container */}
-                  <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', display: 'flex' }}>
-                    <div style={{ width: '26px', height: '26px', borderRadius: '50%', border: `1px solid ${event.color}`, backgroundColor: event.bgColor, zIndex: 1 }}></div>
-                    <div style={{ width: '26px', height: '26px', borderRadius: '50%', border: `1px solid ${event.color}`, backgroundColor: event.bgColor, marginLeft: '-8px', zIndex: 2 }}></div>
-                    <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: event.color, marginLeft: '-8px', zIndex: 3 }}></div>
-                  </div>
+                  {/* Options Button */}
+                  <button style={{ 
+                    position: 'absolute', 
+                    bottom: '0.8rem', 
+                    right: '0.8rem', 
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#9CA3AF',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%'
+                  }}>
+                    <MoreVertical size={20} />
+                  </button>
                 </div>
               </div>
             ))}
