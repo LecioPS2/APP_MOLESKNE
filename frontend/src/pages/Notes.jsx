@@ -1,12 +1,19 @@
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import { useState, useEffect } from 'react';
-import { Users, Building2, Pencil, Calendar, Clock, FileText } from 'lucide-react';
+import { Users, Building2, Pencil, Calendar, Clock, FileText, X, Save, Trash2, Edit2 } from 'lucide-react';
 
 export default function Notes() {
   const [activeCategory, setActiveCategory] = useState('Todas');
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal State
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const categories = ['Todas', 'Rascunho', 'Reunião', 'Visita Técnica', 'Anotação'];
 
@@ -62,11 +69,89 @@ export default function Notes() {
     try {
       const d = new Date(dateString);
       if (isNaN(d)) return dateString;
-      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     } catch {
       return dateString;
     }
   };
+
+  // --- Handlers for Note Actions ---
+
+  const openNote = (note) => {
+    setSelectedNote(note);
+    setEditData({ ...note }); // Copy data for editing
+    setIsEditing(false);
+  };
+
+  const closeNote = () => {
+    setSelectedNote(null);
+    setEditData(null);
+    setIsEditing(false);
+  };
+
+  const handleSaveNote = async () => {
+    if (!editData) return;
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/entries/${selectedNote._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          text: editData.text,
+          category: editData.category,
+          location: editData.location,
+          participants: editData.participants
+        })
+      });
+
+      if (res.ok) {
+        const updatedEntry = await res.json();
+        // Update local state
+        setEntries(entries.map(e => e._id === updatedEntry._id ? updatedEntry : e));
+        setSelectedNote(updatedEntry);
+        setIsEditing(false);
+      } else {
+        alert('Falha ao salvar a nota.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao salvar.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteNote = async () => {
+    if (!window.confirm('Tem certeza que deseja apagar esta anotação? Esta ação não pode ser desfeita.')) return;
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/entries/${selectedNote._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        // Remove from local state
+        setEntries(entries.filter(e => e._id !== selectedNote._id));
+        closeNote();
+      } else {
+        alert('Falha ao excluir a nota.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao excluir.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-color)', minHeight: '100vh', position: 'relative' }}>
@@ -131,28 +216,30 @@ export default function Notes() {
             activeNotes.map((note) => {
               const color = getCategoryColor(note.category);
               return (
-                <div key={note._id} style={{ 
-                  backgroundColor: 'white', 
-                  borderRadius: '16px',
-                  padding: '1rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-                  border: '1px solid #f3f4f6',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  minHeight: '160px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
-                }}
+                <div key={note._id} 
+                  onClick={() => openNote(note)}
+                  style={{ 
+                    backgroundColor: 'white', 
+                    borderRadius: '16px',
+                    padding: '1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                    border: '1px solid #f3f4f6',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    minHeight: '160px'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
+                  }}
                 >
                   {/* Top Color Accent Line */}
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', backgroundColor: color }}></div>
@@ -160,7 +247,7 @@ export default function Notes() {
                   {/* Date & Category Icon */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem', marginTop: '0.2rem' }}>
                     <span style={{ fontSize: '0.75rem', color: '#9CA3AF', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                      <Calendar size={12} /> {formatDate(note.date)}
+                      <Calendar size={12} /> {formatDate(note.date).split(',')[0]}
                     </span>
                     <div style={{ 
                       width: '24px', height: '24px', borderRadius: '50%', backgroundColor: color + '20', 
@@ -203,6 +290,100 @@ export default function Notes() {
       </main>
 
       <BottomNav activeTab="notes" />
+
+      {/* Note Detail / Edit Modal */}
+      {selectedNote && (
+        <div className="page-transition" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'white', zIndex: 1000, display: 'flex', flexDirection: 'column',
+          overflowY: 'auto'
+        }}>
+          
+          {/* Header */}
+          <div style={{ 
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+            padding: '1.5rem', borderBottom: '1px solid #F3F4F6', backgroundColor: 'white', position: 'sticky', top: 0, zIndex: 10
+          }}>
+            <button onClick={closeNote} style={{ background: 'transparent', border: 'none', color: '#6B7280', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600 }}>
+              <X size={24} /> Fechar
+            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {!isEditing ? (
+                <>
+                  <button onClick={() => setIsEditing(true)} style={{ background: '#F3F4F6', border: 'none', color: 'var(--secondary-blue)', padding: '0.6rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Edit2 size={20} />
+                  </button>
+                  <button onClick={handleDeleteNote} disabled={isDeleting} style={{ background: '#FEE2E2', border: 'none', color: '#EF4444', padding: '0.6rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Trash2 size={20} />
+                  </button>
+                </>
+              ) : (
+                <button onClick={handleSaveNote} disabled={isSaving} style={{ background: '#10B981', border: 'none', color: 'white', padding: '0.6rem 1rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+                  <Save size={18} /> {isSaving ? 'Salvando...' : 'Salvar'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div style={{ padding: '2rem 1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: getCategoryColor(selectedNote.category) }}></div>
+              <span style={{ fontWeight: 600, color: 'var(--secondary-blue)', fontSize: '1.1rem' }}>{selectedNote.category}</span>
+              <span style={{ color: '#9CA3AF', fontSize: '0.9rem', marginLeft: 'auto' }}>{formatDate(selectedNote.date)}</span>
+            </div>
+
+            {isEditing ? (
+              <textarea 
+                value={editData.text}
+                onChange={(e) => setEditData({ ...editData, text: e.target.value })}
+                style={{ 
+                  flex: 1, width: '100%', border: 'none', resize: 'none', fontSize: '1.1rem', 
+                  lineHeight: '1.6', color: '#1F2937', outline: 'none', fontFamily: 'inherit'
+                }}
+                placeholder="Digite sua anotação aqui..."
+                autoFocus
+              />
+            ) : (
+              <div style={{ 
+                flex: 1, fontSize: '1.1rem', lineHeight: '1.6', color: '#1F2937', whiteSpace: 'pre-wrap'
+              }}>
+                {selectedNote.text || 'Nota sem conteúdo...'}
+              </div>
+            )}
+            
+            {/* Display location/participants if available and not editing text (or make them editable too) */}
+            {(selectedNote.location || selectedNote.participants) && (
+              <div style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#F9FAFB', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {isEditing ? (
+                  <>
+                    <input 
+                      type="text" 
+                      placeholder="Local"
+                      value={editData.location || ''} 
+                      onChange={(e) => setEditData({...editData, location: e.target.value})} 
+                      style={{ border: '1px solid #E5E7EB', padding: '0.8rem', borderRadius: '8px', outline: 'none' }}
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Participantes"
+                      value={editData.participants || ''} 
+                      onChange={(e) => setEditData({...editData, participants: e.target.value})} 
+                      style={{ border: '1px solid #E5E7EB', padding: '0.8rem', borderRadius: '8px', outline: 'none' }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {selectedNote.location && <div style={{ fontSize: '0.95rem', color: '#4B5563', display: 'flex', alignItems: 'center', gap: '8px' }}>📍 {selectedNote.location}</div>}
+                    {selectedNote.participants && <div style={{ fontSize: '0.95rem', color: '#4B5563', display: 'flex', alignItems: 'center', gap: '8px' }}>👥 {selectedNote.participants}</div>}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
