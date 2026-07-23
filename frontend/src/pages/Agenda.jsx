@@ -197,10 +197,14 @@ export default function Agenda() {
              
              {entries
                .filter(e => {
-                 // Ensure the entry matches the currently selected date (YYYY-MM-DD)
                  if (!e.date) return false;
-                 // Quick and dirty mock extraction
-                 return true; // For now, show all fetched on this day, actually let's filter correctly if possible
+                 
+                 // Get YYYY-MM-DD of the selected date in local time
+                 const pad = (n) => n.toString().padStart(2, '0');
+                 const selectedDateStr = `${selectedDate.getFullYear()}-${pad(selectedDate.getMonth()+1)}-${pad(selectedDate.getDate())}`;
+                 
+                 // e.date comes from MongoDB/Input usually as "YYYY-MM-DDTHH:mm"
+                 return e.date.startsWith(selectedDateStr);
                })
                .map((entry, idx) => {
                  let time = '12:00';
