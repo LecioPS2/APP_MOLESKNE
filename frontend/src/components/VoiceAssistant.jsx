@@ -43,11 +43,15 @@ export default function VoiceAssistant({ onClose }) {
 
         // Try basic date extraction (e.g. 25/10 or 25 de outubro)
         const dateMatch = transcript.match(/(\d{1,2})[\/\-](\d{1,2})/);
-        let parsedDate = '';
+        
+        const now = new Date();
+        const pad = (n) => n.toString().padStart(2, '0');
+        let parsedDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        
         if (dateMatch) {
           const d = dateMatch[1].padStart(2, '0');
           const m = dateMatch[2].padStart(2, '0');
-          parsedDate = `${new Date().getFullYear()}-${m}-${d}T12:00`;
+          parsedDate = `${now.getFullYear()}-${m}-${d}T12:00`;
         }
 
         setData({ category, text: transcript, date: parsedDate, location: '', participants: '' });
