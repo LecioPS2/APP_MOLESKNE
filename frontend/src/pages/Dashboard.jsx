@@ -3,7 +3,8 @@ import BottomNav from '../components/BottomNav';
 import { Search, SlidersHorizontal, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { MoreVertical, ExternalLink } from 'lucide-react';
+import { MoreVertical, ExternalLink, Edit2, Trash2 } from 'lucide-react';
+import ManualCreate from '../components/ManualCreate';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -17,36 +18,53 @@ export default function Dashboard() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [editingEntry, setEditingEntry] = useState(null);
   
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const fullName = user?.name || 'Usuário';
   const firstName = fullName.split(' ')[0];
 
-  // Fetch entries from DB
-  useEffect(() => {
-    const fetchEntries = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
+  const fetchEntries = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
 
-        const res = await fetch('/api/entries', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          // Filter to only today's entries for the dashboard (mock logic)
-          // In real app we might parse the ISO date or datetime-local
-          setEntries(data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+      const res = await fetch('/api/entries', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Filter to only today's entries for the dashboard (mock logic)
+        // In real app we might parse the ISO date or datetime-local
+        setEntries(data);
       }
-    };
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchEntries();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Tem certeza que deseja apagar esta anotação?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/entries/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setEntries(entries.filter(e => e._id !== id));
+      }
+    } catch (err) {
+      console.error('Erro ao excluir:', err);
+    }
+  };
 
   const getEventColor = (category) => {
     switch (category) {
@@ -306,6 +324,38 @@ export default function Dashboard() {
                           <ExternalLink size={16} color="#4285F4" />
                           Enviar p/ Google Agenda
                         </button>
+                        
+                        <div style={{ height: '1px', backgroundColor: '#F3F4F6', margin: '4px 0' }}></div>
+                            
+                        <button 
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            // Find the full entry from state since `event` is a mapped subset
+                            const fullEntry = entries.find(e => e._id === event.id);
+                            if (fullEntry) setEditingEntry(fullEntry);
+                          }}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                            background: 'transparent', border: 'none', color: '#4B5563', padding: '0.5rem',
+                            cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left'
+                          }}>
+                          <Edit2 size={16} color="#10B981" />
+                          Editar Anotação
+                        </button>
+                        
+                        <button 
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            handleDelete(event.id);
+                          }}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                            background: 'transparent', border: 'none', color: '#EF4444', padding: '0.5rem',
+                            cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left'
+                          }}>
+                          <Trash2 size={16} />
+                          Excluir
+                        </button>
                       </div>
                     )}
                   </div>
@@ -318,6 +368,16 @@ export default function Dashboard() {
       </main>
 
       <BottomNav activeTab="home" />
+
+      {editingEntry && (
+        <ManualCreate 
+          initialData={editingEntry} 
+          onClose={() => {
+            setEditingEntry(null);
+            fetchEntries(); // Refresh after edit
+          }} 
+        />
+      )}
     </div>
   );
 }

@@ -21,8 +21,12 @@ export default function ManualCreate({ onClose, initialData = null }) {
     const token = localStorage.getItem('token');
     
     try {
-      const res = await fetch('/api/entries', {
-        method: 'POST',
+      const isEditing = !!initialData?._id;
+      const url = isEditing ? `/api/entries/${initialData._id}` : '/api/entries';
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

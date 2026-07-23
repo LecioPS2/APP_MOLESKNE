@@ -1,7 +1,8 @@
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import { useState, useEffect, useRef } from 'react';
-import { MoreVertical, Calendar as CalendarIcon, ExternalLink } from 'lucide-react';
+import { MoreVertical, Calendar as CalendarIcon, ExternalLink, Edit2, Trash2 } from 'lucide-react';
+import ManualCreate from '../components/ManualCreate';
 
 export default function Agenda() {
   const hours = [
@@ -14,27 +15,44 @@ export default function Agenda() {
   const [calendarDays, setCalendarDays] = useState([]);
   const [entries, setEntries] = useState([]);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [editingEntry, setEditingEntry] = useState(null);
   const scrollRef = useRef(null);
 
-  // Fetch real entries
-  useEffect(() => {
-    const fetchEntries = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        const res = await fetch('/api/entries', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setEntries(data);
-        }
-      } catch (err) {
-        console.error(err);
+  const fetchEntries = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch('/api/entries', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEntries(data);
       }
-    };
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
     fetchEntries();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Tem certeza que deseja apagar esta anotação?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/entries/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setEntries(entries.filter(e => e._id !== id));
+      }
+    } catch (err) {
+      console.error('Erro ao excluir:', err);
+    }
+  };
 
   // Generate 60 days around the currently selected date
   useEffect(() => {
@@ -345,6 +363,36 @@ export default function Agenda() {
                               <ExternalLink size={16} color="#4285F4" />
                               Enviar p/ Google Agenda
                             </button>
+                            
+                            <div style={{ height: '1px', backgroundColor: '#F3F4F6', margin: '4px 0' }}></div>
+                            
+                            <button 
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                setEditingEntry(entry);
+                              }}
+                              style={{
+                                width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                                background: 'transparent', border: 'none', color: '#4B5563', padding: '0.5rem',
+                                cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left'
+                              }}>
+                              <Edit2 size={16} color="#10B981" />
+                              Editar Anotação
+                            </button>
+                            
+                            <button 
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                handleDelete(entry._id);
+                              }}
+                              style={{
+                                width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                                background: 'transparent', border: 'none', color: '#EF4444', padding: '0.5rem',
+                                cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left'
+                              }}>
+                              <Trash2 size={16} />
+                              Excluir
+                            </button>
                           </div>
                         )}
                       </div>
@@ -357,6 +405,16 @@ export default function Agenda() {
       </main>
 
       <BottomNav activeTab="agenda" />
+
+      {editingEntry && (
+        <ManualCreate 
+          initialData={editingEntry} 
+          onClose={() => {
+            setEditingEntry(null);
+            fetchEntries(); // Refresh after edit
+          }} 
+        />
+      )}
     </div>
   );
 }
