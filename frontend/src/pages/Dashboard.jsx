@@ -3,7 +3,7 @@ import BottomNav from '../components/BottomNav';
 import { Search, SlidersHorizontal, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, ExternalLink } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -16,6 +16,7 @@ export default function Dashboard() {
 
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openMenuId, setOpenMenuId] = useState(null);
   
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
@@ -253,22 +254,61 @@ export default function Dashboard() {
                   <p style={{ margin: 0, fontSize: '0.85rem', color: '#6B7280', marginTop: '0.3rem' }}>{event.description}</p>
                   
                   {/* Options Button */}
-                  <button style={{ 
-                    position: 'absolute', 
-                    bottom: '0.8rem', 
-                    right: '0.8rem', 
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#9CA3AF',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '50%'
-                  }}>
-                    <MoreVertical size={20} />
-                  </button>
+                  <div style={{ position: 'absolute', top: '1rem', right: '0.8rem' }}>
+                    <button 
+                      onClick={() => setOpenMenuId(openMenuId === event.id ? null : event.id)}
+                      style={{ 
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#9CA3AF',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '50%'
+                      }}>
+                      <MoreVertical size={20} />
+                    </button>
+
+                    {/* Popup Menu */}
+                    {openMenuId === event.id && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        backgroundColor: 'white',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                        borderRadius: '12px',
+                        padding: '0.5rem',
+                        zIndex: 10,
+                        minWidth: '180px',
+                        border: '1px solid #F3F4F6'
+                      }}>
+                        <button 
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            alert("Configuração do Google Agenda requerida no seu perfil.");
+                          }}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#4B5563',
+                            padding: '0.5rem',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            textAlign: 'left'
+                          }}>
+                          <ExternalLink size={16} color="#4285F4" />
+                          Enviar p/ Google Agenda
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

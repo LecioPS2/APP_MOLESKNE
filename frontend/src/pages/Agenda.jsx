@@ -1,7 +1,7 @@
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import { useState, useEffect, useRef } from 'react';
-import { MoreVertical, Calendar as CalendarIcon } from 'lucide-react';
+import { MoreVertical, Calendar as CalendarIcon, ExternalLink } from 'lucide-react';
 
 export default function Agenda() {
   const hours = [
@@ -13,6 +13,7 @@ export default function Agenda() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState([]);
   const [entries, setEntries] = useState([]);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const scrollRef = useRef(null);
 
   // Fetch real entries
@@ -288,26 +289,65 @@ export default function Agenda() {
                       <p style={{ margin: 0, fontSize: '0.8rem', color: '#6B7280', marginTop: '0.3rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{desc}</p>
                       
                       {/* Options Button */}
-                      <button style={{ 
-                        position: 'absolute', 
-                        bottom: '0.8rem', 
-                        right: '0.8rem', 
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#9CA3AF',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '50%',
-                        transition: 'color 0.2s'
-                      }}
-                      onMouseOver={(e) => e.currentTarget.style.color = 'var(--secondary-blue)'}
-                      onMouseOut={(e) => e.currentTarget.style.color = '#9CA3AF'}
-                      >
-                        <MoreVertical size={20} />
-                      </button>
+                      <div style={{ position: 'absolute', top: '1rem', right: '0.8rem' }}>
+                        <button 
+                          onClick={() => setOpenMenuId(openMenuId === entry._id ? null : entry._id)}
+                          style={{ 
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#9CA3AF',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '50%',
+                            transition: 'color 0.2s'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.color = 'var(--secondary-blue)'}
+                          onMouseOut={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                        >
+                          <MoreVertical size={20} />
+                        </button>
+
+                        {/* Popup Menu */}
+                        {openMenuId === entry._id && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            backgroundColor: 'white',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                            borderRadius: '12px',
+                            padding: '0.5rem',
+                            zIndex: 10,
+                            minWidth: '180px',
+                            border: '1px solid #F3F4F6'
+                          }}>
+                            <button 
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                alert("Configuração do Google Agenda requerida no seu perfil.");
+                              }}
+                              style={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#4B5563',
+                                padding: '0.5rem',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                textAlign: 'left'
+                              }}>
+                              <ExternalLink size={16} color="#4285F4" />
+                              Enviar p/ Google Agenda
+                            </button>
+                          </div>
+                        )}
+                      </div>
                    </div>
                  );
                })}
