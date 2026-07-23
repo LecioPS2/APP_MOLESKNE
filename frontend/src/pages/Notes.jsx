@@ -1,13 +1,14 @@
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import { useState, useEffect } from 'react';
+import { Users, Building2, Pencil, Calendar, Clock, FileText } from 'lucide-react';
 
 export default function Notes() {
-  const [activeDay, setActiveDay] = useState('SEG');
+  const [activeCategory, setActiveCategory] = useState('Todas');
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const days = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
+  const categories = ['Todas', 'Rascunho', 'Reunião', 'Visita Técnica', 'Anotação'];
 
   // Fetch real entries
   useEffect(() => {
@@ -31,26 +32,41 @@ export default function Notes() {
     fetchEntries();
   }, []);
 
-  const getDayName = (dateString) => {
-    if (!dateString) return 'SEG';
-    let d;
-    if (dateString.includes('T')) d = new Date(dateString);
-    else d = new Date(dateString.replace(' ', 'T'));
-    
-    if (isNaN(d)) return 'SEG';
-    const names = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
-    return names[d.getDay()];
+  const getCategoryColor = (category) => {
+    switch(category) {
+      case 'Reunião': return '#3b82f6'; // primary blue
+      case 'Visita Técnica': return '#10b981'; // green
+      case 'Rascunho': return '#ef4444'; // red
+      case 'Anotação': return '#f59e0b'; // amber
+      default: return '#6b7280'; // gray
+    }
   };
 
-  const activeNotes = entries.filter(e => getDayName(e.date) === activeDay).map(e => {
-    const isReuniao = e.category === 'Reunião';
-    const color = isReuniao ? 'var(--secondary-blue)' : (e.category === 'Visita Técnica' ? 'var(--primary-blue)' : 'var(--danger-red)');
-    return {
-      id: e._id,
-      text: e.text || e.category,
-      color
-    };
+  const getCategoryIcon = (category) => {
+    switch(category) {
+      case 'Reunião': return <Users size={16} />;
+      case 'Visita Técnica': return <Building2 size={16} />;
+      case 'Rascunho': return <Pencil size={16} />;
+      case 'Anotação': return <FileText size={16} />;
+      default: return <FileText size={16} />;
+    }
+  };
+
+  const activeNotes = entries.filter(e => {
+    if (activeCategory === 'Todas') return true;
+    return e.category === activeCategory;
   });
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const d = new Date(dateString);
+      if (isNaN(d)) return dateString;
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+    } catch {
+      return dateString;
+    }
+  };
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-color)', minHeight: '100vh', position: 'relative' }}>
@@ -59,157 +75,130 @@ export default function Notes() {
       <main className="page-transition" style={{ padding: '0', display: 'flex', flexDirection: 'column', flex: 1, paddingBottom: '120px' }}>
         
         {/* Title */}
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--secondary-blue)', padding: '0 1.5rem', marginBottom: '1.5rem' }}>
-          Tarefas / Anotações
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--secondary-blue)', padding: '0 1.5rem', marginBottom: '1rem', marginTop: '0.5rem' }}>
+          Bloco de Notas
         </h2>
 
-        <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
-          
-          {/* Sidebar */}
-          <div style={{ 
-            width: '65px', 
-            backgroundColor: '#525252',
-            borderTopRightRadius: '12px',
-            borderBottomRightRadius: '12px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '1.5rem 0',
-            gap: '1rem',
-            position: 'relative'
-          }}>
-            {days.map((dayLabel, idx) => {
-              const isActive = dayLabel === activeDay;
-              
+        {/* Filter Chips - Horizontal Scroll */}
+        <div className="no-scrollbar" style={{ 
+          display: 'flex', 
+          gap: '0.75rem', 
+          padding: '0 1.5rem 1rem 1.5rem', 
+          overflowX: 'auto',
+          whiteSpace: 'nowrap',
+          WebkitOverflowScrolling: 'touch'
+        }}>
+          {categories.map((cat, idx) => {
+            const isActive = activeCategory === cat;
+            return (
+              <button 
+                key={idx}
+                onClick={() => setActiveCategory(cat)}
+                style={{
+                  padding: '0.5rem 1.2rem',
+                  borderRadius: '20px',
+                  border: 'none',
+                  backgroundColor: isActive ? 'var(--primary-blue)' : '#EAECEF',
+                  color: isActive ? 'white' : 'var(--secondary-blue)',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: isActive ? '0 4px 10px rgba(59, 130, 246, 0.3)' : 'none',
+                  flexShrink: 0
+                }}
+              >
+                {cat}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Masonry/Grid Area */}
+        <div style={{ 
+          flex: 1, 
+          padding: '0.5rem 1.5rem', 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
+          gap: '1rem',
+          alignContent: 'start'
+        }}>
+          {loading ? (
+            <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#6B7280', marginTop: '2rem' }}>Carregando notas...</p>
+          ) : activeNotes.length === 0 ? (
+            <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#6B7280', marginTop: '2rem' }}>Nenhuma nota encontrada.</p>
+          ) : (
+            activeNotes.map((note) => {
+              const color = getCategoryColor(note.category);
               return (
-              <div key={idx} style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-                
-                {/* Blue dot on the edge that moves with the active day */}
-                {isActive && (
-                  <div style={{
-                    position: 'absolute',
-                    right: '-4px', 
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: '10px',
-                    height: '10px',
-                    backgroundColor: 'var(--primary-blue)',
-                    borderRadius: '50%',
-                    zIndex: 2
-                  }}></div>
-                )}
-
-                {/* Day Pill */}
-                <div 
-                  onClick={() => setActiveDay(dayLabel)}
-                  style={{
-                    backgroundColor: isActive ? 'var(--primary-blue)' : '#EAECEF',
-                    color: isActive ? 'white' : 'var(--secondary-blue)',
-                    width: '42px',
-                    height: '52px',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 600,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}>
-                  {dayLabel}
-                </div>
-                
-                {/* White triangle pointing left */}
-                {isActive && (
-                  <div style={{
-                    position: 'absolute',
-                    right: '0',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 0,
-                    height: 0,
-                    borderTop: '10px solid transparent',
-                    borderBottom: '10px solid transparent',
-                    borderRight: '14px solid var(--bg-color)',
-                    zIndex: 1
-                  }}></div>
-                )}
-              </div>
-            )})}
-          </div>
-
-          {/* Cards Area */}
-          <div style={{ flex: 1, padding: '0 1.5rem 0 1rem', display: 'flex', flexDirection: 'column', gap: '1.2rem', position: 'relative' }}>
-            
-            {/* Scrollbar Mock (Blue bar on right) */}
-            {activeNotes.length > 0 && (
-              <div style={{
-                position: 'absolute',
-                right: '4px',
-                top: '20px',
-                width: '4px',
-                height: '120px',
-                backgroundColor: 'var(--primary-blue)',
-                borderRadius: '4px'
-              }}></div>
-            )}
-
-            {/* Render Notes */}
-            {loading ? (
-              <p style={{ textAlign: 'center', color: '#6B7280', marginTop: '3rem' }}>Carregando tarefas...</p>
-            ) : activeNotes.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#6B7280', marginTop: '3rem' }}>Nenhuma tarefa para este dia.</p>
-            ) : (
-              activeNotes.map((note) => (
-                <div key={note.id} style={{ 
-                  backgroundColor: '#D1D5DB', 
+                <div key={note._id} style={{ 
+                  backgroundColor: 'white', 
                   borderRadius: '16px',
-                  height: '150px',
-                  position: 'relative',
-                  padding: '1.2rem',
+                  padding: '1rem',
                   display: 'flex',
-                  flexDirection: 'column'
-                }}>
-                  <p style={{ margin: 0, color: 'var(--secondary-blue)', fontWeight: 600, fontSize: '1rem', opacity: 0.9 }}>
-                    {note.text}
+                  flexDirection: 'column',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                  border: '1px solid #f3f4f6',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  minHeight: '160px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
+                }}
+                >
+                  {/* Top Color Accent Line */}
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', backgroundColor: color }}></div>
+
+                  {/* Date & Category Icon */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem', marginTop: '0.2rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#9CA3AF', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                      <Calendar size={12} /> {formatDate(note.date)}
+                    </span>
+                    <div style={{ 
+                      width: '24px', height: '24px', borderRadius: '50%', backgroundColor: color + '20', 
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: color 
+                    }}>
+                      {getCategoryIcon(note.category)}
+                    </div>
+                  </div>
+
+                  {/* Main Content */}
+                  <p style={{ 
+                    margin: 0, 
+                    color: 'var(--secondary-blue)', 
+                    fontWeight: 600, 
+                    fontSize: '0.95rem', 
+                    lineHeight: '1.4',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 4,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    flex: 1
+                  }}>
+                    {note.text || 'Nota sem conteúdo...'}
                   </p>
 
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '1rem',
-                    right: '1rem',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    backgroundColor: note.color,
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-                  }}></div>
+                  {/* Location/Time (if exists) */}
+                  {(note.location || note.participants) && (
+                    <div style={{ marginTop: '0.8rem', paddingTop: '0.8rem', borderTop: '1px dashed #E5E7EB', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {note.location && <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>📍 {note.location}</span>}
+                      {note.participants && <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>👥 {note.participants}</span>}
+                    </div>
+                  )}
+                  
                 </div>
-              ))
-            )}
-            
-          </div>
-
+              );
+            })
+          )}
         </div>
-        
-        {/* Custom Calendário button at bottom right */}
-        <button style={{
-          position: 'fixed',
-          bottom: '100px',
-          right: '1.5rem',
-          backgroundColor: 'var(--secondary-blue)',
-          color: 'white',
-          padding: '1rem 2rem',
-          borderRadius: '12px',
-          border: 'none',
-          fontWeight: 600,
-          fontSize: '0.9rem',
-          zIndex: 10,
-          boxShadow: 'var(--shadow)',
-          cursor: 'pointer'
-        }}>
-          CALENDÁRIO
-        </button>
 
       </main>
 
