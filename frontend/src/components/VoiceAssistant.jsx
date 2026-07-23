@@ -1,72 +1,106 @@
-import { useEffect, useState } from 'react';
-import { X, Mic, Check } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { X, Mic, MicOff, Check, Square } from 'lucide-react';
 
 export default function VoiceAssistant({ onClose }) {
-  const [aiText, setAiText] = useState('Toque no microfone e fale tudo de uma vez. A IA vai interpretar seu áudio.');
+  const [aiText, setAiText] = useState('Toque no microfone para iniciar. Fale no seu tempo, depois toque em Parar.');
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const [finalTranscript, setFinalTranscript] = useState('');
   const [data, setData] = useState({ category: 'Anotação', date: '', location: '', participants: '', text: '' });
+  
+  const recognitionRef = useRef(null);
 
-  const handleMicClick = () => {
+  useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'pt-BR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setAiText('Estou ouvindo... Pode falar pausadamente. Toque no quadrado para parar.');
+      };
+
+      recognition.onresult = (event) => {
+        let currentTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          currentTranscript += event.results[i][0].transcript + ' ';
+        }
+        setFinalTranscript(currentTranscript.trim());
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        if (event.error === 'no-speech' || event.error === 'audio-capture') {
+          // Ignore timeouts
+        } else {
+          setIsListening(false);
+          setAiText('Houve um problema ao ouvir. Tente novamente.');
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const handleToggleMic = () => {
+    if (!recognitionRef.current) {
       alert('Seu navegador não suporta reconhecimento de voz.');
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'pt-BR';
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    if (isListening) {
+      recognitionRef.current.stop();
+      processText(finalTranscript);
+    } else {
+      setFinalTranscript('');
+      recognitionRef.current.start();
+    }
+  };
 
-    recognition.onstart = () => {
-      setIsListening(true);
-      setAiText('Estou ouvindo... Pode falar!');
-    };
+  const processText = (transcript) => {
+    if (!transcript) {
+      setAiText('Não ouvi nada. Tente novamente.');
+      return;
+    }
+    setIsProcessing(true);
+    setAiText('Analisando sua fala...');
 
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setIsListening(false);
-      setIsProcessing(true);
-      setAiText('Processando...');
+    // Smart Parser
+    setTimeout(() => {
+      let category = 'Anotação';
+      const lowerText = transcript.toLowerCase();
+      
+      if (lowerText.includes('reunião') || lowerText.includes('reuniao')) category = 'Reunião';
+      else if (lowerText.includes('visita') || lowerText.includes('técnica')) category = 'Visita Técnica';
+      else if (lowerText.includes('rascunho')) category = 'Rascunho';
 
-      // Smart Parser
-      setTimeout(() => {
-        let category = 'Anotação';
-        const lowerText = transcript.toLowerCase();
-        
-        if (lowerText.includes('reunião') || lowerText.includes('reuniao')) category = 'Reunião';
-        else if (lowerText.includes('visita') || lowerText.includes('técnica')) category = 'Visita Técnica';
-        else if (lowerText.includes('rascunho')) category = 'Rascunho';
+      // Try basic date extraction (e.g. 25/10 or 25 de outubro)
+      const dateMatch = transcript.match(/(\d{1,2})[\/\-](\d{1,2})/);
+      
+      const now = new Date();
+      const pad = (n) => n.toString().padStart(2, '0');
+      let parsedDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      
+      if (dateMatch) {
+        const d = dateMatch[1].padStart(2, '0');
+        const m = dateMatch[2].padStart(2, '0');
+        parsedDate = `${now.getFullYear()}-${m}-${d}T12:00`;
+      }
 
-        // Try basic date extraction (e.g. 25/10 or 25 de outubro)
-        const dateMatch = transcript.match(/(\d{1,2})[\/\-](\d{1,2})/);
-        
-        const now = new Date();
-        const pad = (n) => n.toString().padStart(2, '0');
-        let parsedDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-        
-        if (dateMatch) {
-          const d = dateMatch[1].padStart(2, '0');
-          const m = dateMatch[2].padStart(2, '0');
-          parsedDate = `${now.getFullYear()}-${m}-${d}T12:00`;
-        }
-
-        setData({ category, text: transcript, date: parsedDate, location: '', participants: '' });
-        setIsProcessing(false);
-        setIsDone(true);
-        setAiText('Tudo pronto! Posso salvar sua anotação?');
-      }, 1000);
-    };
-
-    recognition.onerror = (event) => {
-      setIsListening(false);
-      setAiText('Não consegui ouvir bem. Tente novamente.');
-    };
-
-    recognition.start();
+      setData({ category, text: transcript, date: parsedDate, location: '', participants: '' });
+      setIsProcessing(false);
+      setIsDone(true);
+      setAiText('Tudo pronto! Posso salvar sua anotação?');
+    }, 800);
   };
 
   const handleSave = async () => {
@@ -127,35 +161,44 @@ export default function VoiceAssistant({ onClose }) {
           </div>
         )}
 
+        {/* Transcription Preview (while listening) */}
+        {!isDone && finalTranscript && (
+          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px', width: '100%', maxWidth: '350px', marginBottom: '2rem', textAlign: 'left', minHeight: '60px' }}>
+            <p style={{ margin: 0, fontSize: '0.95rem', fontStyle: 'italic', color: '#E5E7EB' }}>"{finalTranscript}"</p>
+          </div>
+        )}
+
         {/* Mic / Action Button */}
         {!isDone ? (
           <div style={{ position: 'relative' }}>
             {/* Animated Rings if listening */}
             {isListening && (
               <>
-                <div style={{ position: 'absolute', top: '-20px', left: '-20px', right: '-20px', bottom: '-20px', border: '2px solid rgba(66, 133, 244, 0.4)', borderRadius: '50%', animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite' }}></div>
-                <div style={{ position: 'absolute', top: '-40px', left: '-40px', right: '-40px', bottom: '-40px', border: '1px solid rgba(66, 133, 244, 0.2)', borderRadius: '50%', animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite 0.5s' }}></div>
+                <div style={{ position: 'absolute', top: '-20px', left: '-20px', right: '-20px', bottom: '-20px', border: '2px solid rgba(16, 185, 129, 0.4)', borderRadius: '50%', animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite' }}></div>
+                <div style={{ position: 'absolute', top: '-40px', left: '-40px', right: '-40px', bottom: '-40px', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '50%', animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite 0.5s' }}></div>
               </>
             )}
 
             <button 
-              onClick={handleMicClick}
-              disabled={isListening || isProcessing}
+              onClick={handleToggleMic}
+              disabled={isProcessing}
               style={{
                 width: '80px', height: '80px', borderRadius: '50%',
-                backgroundColor: isProcessing ? '#4B5563' : (isListening ? '#10B981' : 'var(--primary-blue)'), 
+                backgroundColor: isProcessing ? '#4B5563' : (isListening ? '#EF4444' : 'var(--primary-blue)'), 
                 border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
                 position: 'relative', zIndex: 2, transition: 'all 0.3s ease'
               }}>
               {isProcessing ? (
                 <div className="spinner" style={{ width: '30px', height: '30px', borderWidth: '3px' }}></div>
+              ) : isListening ? (
+                <Square size={28} fill="white" />
               ) : (
                 <Mic size={36} />
               )}
             </button>
             <p style={{ marginTop: '1.5rem', opacity: 0.7, fontSize: '0.9rem' }}>
-               {isProcessing ? 'Processando fala...' : (isListening ? 'Fale agora...' : 'Toque para falar')}
+               {isProcessing ? 'Processando fala...' : (isListening ? 'Toque no quadrado para parar' : 'Toque no microfone para iniciar')}
             </p>
           </div>
         ) : (
