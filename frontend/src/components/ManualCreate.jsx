@@ -73,26 +73,28 @@ export default function ManualCreate({ onClose, initialData = null }) {
         {/* Category Selector */}
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: 'var(--secondary-blue)', marginBottom: '0.8rem' }}>Categoria</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
-            {categories.map(c => (
-              <button 
-                key={c}
-                onClick={() => setCategory(c)}
-                style={{
-                  padding: '0.6rem 1rem',
-                  borderRadius: '20px',
-                  border: category === c ? 'none' : '1px solid #D1D5DB',
-                  backgroundColor: category === c ? 'var(--primary-blue)' : 'white',
-                  color: category === c ? 'white' : '#6B7280',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  boxShadow: category === c ? '0 4px 10px rgba(66, 133, 244, 0.3)' : 'none',
-                  transition: 'all 0.2s ease'
-                }}>
-                {c}
-              </button>
-            ))}
+          <div style={{ position: 'relative' }}>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                borderRadius: '12px',
+                border: '1px solid #E5E7EB',
+                fontSize: '1rem',
+                outline: 'none',
+                backgroundColor: 'white',
+                color: 'var(--text-primary)',
+                fontFamily: 'inherit',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                cursor: 'pointer'
+              }}
+            >
+              {categories.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
         </div>
 
