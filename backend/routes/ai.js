@@ -21,6 +21,7 @@ router.post('/scan', async (req, res) => {
     // Using gemini-flash-latest alias to ensure compatibility with new API keys
     const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
+    const currentYear = new Date().getFullYear();
     const prompt = `
 Você é um assistente de produtividade especializado em analisar anotações manuscritas ou impressas.
 Analise a imagem fornecida e extraia as informações estruturadas no formato JSON abaixo.
@@ -31,7 +32,7 @@ Regras de Classificação de Categoria:
 - Caso contrário, classifique como "Anotação" (ou "Rascunho" se parecer muito informal)
 
 Extraia os seguintes campos com precisão. Se não encontrar um campo, retorne string vazia "".
-A data deve estar no formato YYYY-MM-DDTHH:mm. Se não houver horário, use T12:00. Se o ano não for mencionado, assuma o ano atual.
+A data deve estar no formato YYYY-MM-DDTHH:mm. Se não houver horário, use T12:00. Se o ano não for mencionado, assuma o ano atual (${currentYear}).
 
 Responda APENAS com um objeto JSON válido, sem markdown, sem crases.
 Exemplo de formato:
