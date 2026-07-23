@@ -98,24 +98,32 @@ export default function ManualCreate({ onClose, initialData = null }) {
         {/* Date Field */}
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: 'var(--secondary-blue)', marginBottom: '0.8rem' }}>Data e Horário</label>
-          <div style={{ position: 'relative' }}>
-            <CalendarIcon size={20} color="#9CA3AF" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            backgroundColor: 'white', 
+            border: '1px solid #E5E7EB', 
+            borderRadius: '12px',
+            padding: '0 1rem',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+            overflow: 'hidden'
+          }}>
+            <CalendarIcon size={20} color="#9CA3AF" style={{ flexShrink: 0 }} />
             <input 
               type="datetime-local" 
               value={date}
               onChange={(e) => setDate(e.target.value)}
               style={{
-                width: '100%',
-                padding: '1rem 1rem 1rem 3rem',
-                borderRadius: '12px',
-                border: '1px solid #E5E7EB',
+                flex: 1,
+                minWidth: 0, /* Crucial to prevent flex child overflow */
+                padding: '1rem 0 1rem 0.8rem',
+                border: 'none',
                 fontSize: '1rem',
                 outline: 'none',
-                backgroundColor: 'white',
+                backgroundColor: 'transparent',
                 color: 'var(--text-primary)',
                 fontFamily: 'inherit',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                boxSizing: 'border-box'
+                width: '100%'
               }}
             />
           </div>
