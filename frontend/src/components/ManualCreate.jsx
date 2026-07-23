@@ -62,10 +62,7 @@ export default function ManualCreate({ onClose, initialData = null }) {
           <X size={28} />
         </button>
         <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--secondary-blue)' }}>Nova Anotação</div>
-        <button onClick={handleSave} disabled={loading} style={{ background: 'transparent', border: 'none', color: loading ? '#9CA3AF' : 'var(--primary-blue)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '1rem', marginRight: '-0.5rem' }}>
-          <Save size={20} strokeWidth={2.5} />
-          {loading ? 'Salvando...' : 'Salvar'}
-        </button>
+        <div style={{ width: '44px' }}></div> {/* Spacer to center the title */}
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -117,7 +114,8 @@ export default function ManualCreate({ onClose, initialData = null }) {
                 backgroundColor: 'white',
                 color: 'var(--text-primary)',
                 fontFamily: 'inherit',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                boxSizing: 'border-box'
               }}
             />
           </div>
@@ -174,6 +172,29 @@ export default function ManualCreate({ onClose, initialData = null }) {
             }}
           ></textarea>
         </div>
+
+        {/* Save Button */}
+        <button onClick={handleSave} disabled={loading} style={{
+          width: '100%',
+          padding: '1.2rem',
+          backgroundColor: 'var(--primary-blue)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '12px',
+          fontSize: '1.1rem',
+          fontWeight: 700,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '0.5rem',
+          cursor: 'pointer',
+          marginTop: 'auto', // Pushes to the bottom if there's extra space
+          boxShadow: '0 4px 12px rgba(66, 133, 244, 0.3)',
+          transition: 'all 0.2s ease'
+        }}>
+          <Save size={24} />
+          {loading ? 'Salvando...' : 'Salvar Anotação'}
+        </button>
 
       </div>
     </div>
