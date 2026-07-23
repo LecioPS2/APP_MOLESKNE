@@ -104,11 +104,13 @@ export default function Agenda() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-color)', minHeight: '100vh', position: 'relative' }}>
-      <Header />
-
-      <main className="page-transition" style={{ padding: '0 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, paddingBottom: '120px' }}>
+      
+      {/* STICKY TOP SECTION */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 50, backgroundColor: 'var(--bg-color)' }}>
+        <Header />
         
-        {/* Compact Header with Native Date Picker */}
+        <div style={{ padding: '0 1.5rem' }}>
+          {/* Compact Header with Native Date Picker */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', marginTop: '0.5rem' }}>
           <div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--secondary-blue)', margin: 0 }}>
@@ -224,7 +226,10 @@ export default function Agenda() {
             })}
           </div>
         </div>
+      </div>
+    </div>
 
+    <main className="page-transition" style={{ padding: '0 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, paddingBottom: '120px' }}>
         {/* Agenda Section */}
         <div style={{ position: 'relative', display: 'flex', paddingBottom: '2rem', flex: 1 }}>
           
