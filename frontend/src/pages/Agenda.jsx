@@ -1,6 +1,7 @@
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import { useState, useEffect, useRef } from 'react';
+import { MoreVertical } from 'lucide-react';
 
 export default function Agenda() {
   const hours = [
@@ -105,6 +106,10 @@ export default function Agenda() {
             }}>
             {calendarDays.map((date, idx) => {
               const isActive = date.toDateString() === selectedDate.toDateString();
+              const pad = (n) => n.toString().padStart(2, '0');
+              const dateStr = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+              const hasEvents = entries.some(e => e.date && e.date.startsWith(dateStr));
+              
               return (
                 <div 
                   key={idx} 
@@ -127,6 +132,17 @@ export default function Agenda() {
                   }}>
                   <span style={{ fontSize: '0.75rem', marginBottom: '0.2rem' }}>{formatDayName(date)}</span>
                   <span style={{ fontSize: '1.2rem' }}>{date.getDate()}</span>
+                  
+                  {/* Event Indicator Dot */}
+                  {hasEvents && !isActive && (
+                    <div style={{
+                      width: '5px',
+                      height: '5px',
+                      backgroundColor: 'var(--danger-red)',
+                      borderRadius: '50%',
+                      marginTop: '4px'
+                    }}></div>
+                  )}
 
                   {/* Active Blue Indicator mapping to the bottom track */}
                   {isActive && (
@@ -250,12 +266,23 @@ export default function Agenda() {
                       <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--secondary-blue)' }}>{time} - {title}</h4>
                       <p style={{ margin: 0, fontSize: '0.8rem', color: '#6B7280', marginTop: '0.3rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{desc}</p>
                       
-                      {/* Avatars */}
-                      <div style={{ position: 'absolute', bottom: '0.8rem', right: '1rem', display: 'flex' }}>
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: `1px solid ${color}`, backgroundColor: bgColor, zIndex: 1 }}></div>
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: `1px solid ${color}`, backgroundColor: bgColor, marginLeft: '-8px', zIndex: 2 }}></div>
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: color, marginLeft: '-8px', zIndex: 3 }}></div>
-                      </div>
+                      {/* Options Button */}
+                      <button style={{ 
+                        position: 'absolute', 
+                        bottom: '0.8rem', 
+                        right: '0.8rem', 
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#6B7280',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '50%'
+                      }}>
+                        <MoreVertical size={20} />
+                      </button>
                    </div>
                  );
                })}
