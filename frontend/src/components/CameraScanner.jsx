@@ -13,7 +13,11 @@ export default function CameraScanner({ onClose, onContinue }) {
     async function startCamera() {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          } 
         });
         setStream(mediaStream);
         if (videoRef.current) {
@@ -52,16 +56,17 @@ export default function CameraScanner({ onClose, onContinue }) {
       
       console.log('OCR Result:', text);
 
-      // 3. Simple Heuristic AI Parser
+      // 3. Robust Heuristic AI Parser
       let category = 'Anotação';
       const lowerText = text.toLowerCase();
       
-      if (lowerText.includes('reunião') || lowerText.includes('reuniao')) category = 'Reunião';
-      else if (lowerText.includes('visita') || lowerText.includes('técnica')) category = 'Visita Técnica';
-      else if (lowerText.includes('rascunho')) category = 'Rascunho';
+      // Fuzzy matching using Regex to account for OCR typos
+      if (lowerText.match(/r[eoé]uni[aãäâo]o/i) || lowerText.match(/reuni/i)) category = 'Reunião';
+      else if (lowerText.match(/visita/i) || lowerText.match(/t[eéè]cnica/i)) category = 'Visita Técnica';
+      else if (lowerText.match(/rascunho/i)) category = 'Rascunho';
 
-      // Extract date (DD/MM/YYYY or DD/MM)
-      const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+      // Extract date (DD/MM/YYYY or DD/MM or DD.MM)
+      const dateMatch = text.match(/(\d{1,2})[\/\-\.](\d{1,2})(?:[\/\-\.](\d{2,4}))?/);
       let parsedDate = '';
       if (dateMatch) {
         const d = dateMatch[1].padStart(2, '0');
