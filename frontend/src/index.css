@@ -291,3 +291,25 @@ body {
     opacity: 0;
   }
 }
+
+/* Radar Pulse Animation for Notifications */
+@keyframes radar-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 12px rgba(66, 133, 244, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(66, 133, 244, 0);
+  }
+}
+
+.radar-pulse-active {
+  animation: radar-pulse 2s infinite;
+  background-color: var(--primary-blue) !important;
+  color: white !important;
+}
